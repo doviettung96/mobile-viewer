@@ -1,0 +1,66 @@
+# Project Instructions for AI Agents
+
+This file provides instructions and context for AI coding agents working on this project.
+
+## Build & Test
+
+```bash
+npm install
+npm run typecheck
+npm run build
+npm run preview --workspace web -- --host 127.0.0.1 --port 4173
+curl -I http://127.0.0.1:4173/
+```
+
+For live browser and device smoke work, also read `docs/local-validation.md`. The repo does not yet ship a checked-in backend launcher or same-origin proxy for `/api/*` and `/ws/*`, so that part of validation remains a documented prerequisite instead of a fake default command.
+
+## Architecture Overview
+
+`mobile-viewer` is a TypeScript npm workspace. `shared/` exports API and stream contracts, `server/` contains the Fastify control plane plus ADB or scrcpy integration, and `web/` contains the Vite or React dashboard that consumes the shared contracts.
+
+The browser runtime uses relative `/api/*` and `/ws/*` paths. A live dashboard therefore requires a same-origin path between the web app and the Fastify backend, whether that is static hosting, a reverse proxy, or a future repo-local launcher flow.
+
+## Conventions & Patterns
+
+- Keep cross-runtime types in `shared/` and import them rather than duplicating request or websocket payload shapes.
+- Use workspace-level `npm run typecheck` and `npm run build` as the default validation floor for repo changes.
+- When documenting or validating runtime behavior, use the concrete defaults already present in code: backend port `3000`, Vite preview port `4173`, and the auth or scrcpy env vars from `server/src/config/index.ts`.
+- If a live smoke path is not implemented in the repo yet, document the missing prerequisite explicitly instead of inventing a speculative command.
+
+<!-- BEGIN TEMPLATE BD WORKFLOW -->
+## Workflow Guide
+
+Use `BEADS_WORKFLOW.md` for the current planner, manual executor, and swarm executor flow. All workflow skills are repo-local: Codex skills live under `.codex/skills/`, Claude skills under `.claude/skills/`.
+
+Preferred entry points are `plan-beads`, `swarm-epic`, and `executor-once`. Use `planner-research` only inside a planner session when `brainstorming` still leaves material factual uncertainty. Use `executor-loop` or `executor-loop-epic` for sequential autonomy when swarm coordination is not needed.
+
+The executor test skill lives at `.codex/skills/build-and-test/SKILL.md`; use it between implementation and final verification.
+
+Use `scripts/windows/workflow-status.ps1` or `scripts/posix/workflow-status.sh` to inspect `.beads/workflow/`, the shared control plane, and Beads backend state. Use `scripts/windows/agent-mail.ps1` or `scripts/posix/agent-mail.sh` for shared epic locks, reservations, and mailbox inspection.
+
+## Issue Tracking With `bd`
+
+- Use `bd` for all issue tracking
+- Do not use markdown TODO files, TodoWrite, or alternate trackers
+- Live `.beads` state is local-only and should not be committed
+- Run one top-level epic executor session at a time in a checkout
+
+## Essential Commands
+
+```bash
+bd ready --json
+bd show <id> --json
+bd create --title="Summary" --description="Details" --type=task|bug|feature|epic --priority=2
+bd update <id> --status=in_progress
+bd close <id> --reason="Completed"
+bd dep add <child-id> <parent-id>
+git checkout -b epic/<epic-id>
+```
+
+## Notes
+
+- Epics must use `--type=epic`
+- Check `bd ready` before asking what to work on next
+- `swarm-epic` may coordinate workers inside one epic, but only the coordinator updates bead status during swarm execution
+- If the current checkout cannot open the Beads database, inspect `bd where` and run `bd bootstrap --yes` before continuing
+<!-- END TEMPLATE BD WORKFLOW -->
