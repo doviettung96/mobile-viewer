@@ -1,0 +1,28 @@
+{
+  "name": "@mobile-viewer/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/websocket": "^11.2.0",
+    "@mobile-viewer/shared": "file:../shared",
+    "@yume-chan/adb": "^2.6.0",
+    "@yume-chan/adb-scrcpy": "^2.3.2",
+    "@yume-chan/adb-server-node-tcp": "^2.5.2",
+    "@yume-chan/scrcpy": "^2.3.0",
+    "fastify": "^5.8.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2"
+  },
+  "scripts": {
+    "build": "npm run build --workspace @mobile-viewer/shared && tsc -p tsconfig.json",
+    "typecheck": "npm run build --workspace @mobile-viewer/shared && tsc -p tsconfig.json --noEmit"
+  }
+}
