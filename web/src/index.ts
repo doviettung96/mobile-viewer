@@ -1,1 +1,1 @@
-export const webPackageName = "@mobile-viewer/web";
+export { App } from "./app/App.js";
