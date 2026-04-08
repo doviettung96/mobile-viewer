@@ -12,12 +12,14 @@
   "devDependencies": {
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@playwright/test": "^1.54.2",
     "@vitejs/plugin-react": "^6.0.1",
     "vite": "^8.0.7"
   },
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "test": "playwright test",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }

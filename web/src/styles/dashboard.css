@@ -139,18 +139,21 @@
   display: grid;
   gap: 1.25rem;
   align-items: start;
+  min-width: 0;
 }
 
 .device-grid {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  min-width: 0;
 }
 
 .device-tile {
   display: grid;
   gap: 1rem;
   padding: 1.1rem;
+  min-width: 0;
 }
 
 .device-tile.is-selected {
@@ -169,6 +172,7 @@
   margin: 0.35rem 0 0;
   color: #688099;
   font-size: 0.86rem;
+  overflow-wrap: anywhere;
 }
 
 .device-state {
@@ -201,6 +205,7 @@
   display: grid;
   gap: 0.75rem;
   margin: 0;
+  min-width: 0;
 }
 
 .device-meta div,
@@ -226,6 +231,7 @@
   display: grid;
   gap: 1rem;
   padding: 1.25rem;
+  min-width: 0;
 }
 
 .expanded-pane__header {
@@ -238,17 +244,20 @@
 .expanded-pane__header p:last-child {
   margin: 0.35rem 0 0;
   color: #688099;
+  overflow-wrap: anywhere;
 }
 
 .expanded-stage {
   display: grid;
   gap: 1rem;
+  min-width: 0;
 }
 
 .device-viewport {
   display: grid;
   gap: 0.75rem;
   padding: 0.85rem;
+  min-width: 0;
 }
 
 .device-viewport__toolbar {
@@ -309,6 +318,7 @@
 
 .device-viewport__surface.is-expandable {
   cursor: zoom-in;
+  touch-action: manipulation;
 }
 
 .device-viewport__surface.is-interactive:focus-visible {
@@ -379,6 +389,30 @@
   gap: 0.75rem;
   color: #688099;
   font-size: 0.82rem;
+  min-width: 0;
+}
+
+.device-viewport__meta span,
+.device-tile__open-state {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.device-tile__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.device-tile__actions .secondary-button {
+  justify-self: start;
+}
+
+.device-tile__open-state {
+  color: #4b647f;
+  font-size: 0.84rem;
+  font-weight: 600;
 }
 
 .device-tile__hint {
@@ -409,7 +443,7 @@
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 920px) {
   .dashboard-shell {
     padding-inline: 1rem;
   }
@@ -433,5 +467,29 @@
 
   .session-pill {
     text-align: left;
+  }
+
+  .viewer-toolbar__actions,
+  .device-tile__actions {
+    width: 100%;
+  }
+
+  .viewer-toolbar__actions .secondary-button,
+  .device-tile__actions .secondary-button {
+    flex: 1 1 10rem;
+  }
+
+  .device-viewport__meta {
+    align-items: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .device-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-layout.has-expanded-pane .expanded-pane .device-viewport__surface {
+    min-height: 22rem;
   }
 }

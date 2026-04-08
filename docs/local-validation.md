@@ -37,6 +37,9 @@ These checks are stable and should be treated as the default automated validatio
 2. `npm run build`
 3. Start `npm run preview --workspace web -- --host 127.0.0.1 --port 4173`
 4. Confirm `curl http://127.0.0.1:4173/` returns HTML containing `<div id="root"></div>`
+5. Run `npm run test --workspace web` to exercise the responsive Playwright coverage for `390x844`, `820x1180`, and a small-laptop viewport
+
+If the local machine has not installed the Playwright browser binary yet, install it once with `npx playwright install chromium` before rerunning the web test command. Treat that as machine setup, not as a repo guarantee.
 
 If you have a local browser available, you can also open `http://127.0.0.1:4173/` and confirm the built app loads the login shell with the heading `Open the dashboard with the shared token.`
 
@@ -118,3 +121,11 @@ Use this order for live validation:
 7. For the multi-device viewer bead, verify two tiles render and that control sent to one device does not change the other device
 8. For container-runtime validation, run `./scripts/posix/start-runtime-container.sh`, confirm the app is reachable on `http://127.0.0.1:3000/`, and note the local Compose CLI version only as environment context, not as a repo guarantee
 9. If the container uses `host.docker.internal` for ADB, make sure the host daemon is listening beyond loopback, for example with `adb -a start-server`, before treating `/api/devices` failures as an app bug
+
+For phone or tablet smoke on a LAN host, be explicit about the secure-context limit: if the origin is plain HTTP and the browser cannot expose `VideoDecoder` or stream playback, record that as the blocker rather than claiming the responsive smoke passed. The responsive Playwright suite still covers `390x844`, `820x1180`, and the small-laptop viewport on the local machine even when live LAN playback is blocked.
+
+## Current Responsive Validation Notes
+
+- The final responsive integration gate passed locally on April 8, 2026 with the automated Playwright coverage for `390x844`, `820x1180`, and a small-laptop viewport.
+- No real LAN phone or tablet was available in this environment, so live small-screen smoke on `http://<reachable-host>:3000/` remains blocked here.
+- If `MVIEW_HOST=0.0.0.0 MVIEW_PORT=3000 npm run start --workspace @mobile-viewer/server` returns `EADDRINUSE`, confirm the already-running same-origin server with `curl http://127.0.0.1:3000/health` before treating it as a repo failure.

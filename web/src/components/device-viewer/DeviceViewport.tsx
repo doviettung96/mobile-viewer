@@ -45,6 +45,7 @@ function statusLabel(stream: DeviceStreamBinding, streamEnabled: boolean): strin
 export function DeviceViewport({ compact, device, streamEnabled, interactive, stream, onOpenExpanded }: DeviceViewportProps) {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const activePointerIdRef = useRef<number | null>(null);
+  const canOpenExpanded = compact && onOpenExpanded !== undefined;
 
   const handlePointerEvent = (event: React.PointerEvent<HTMLDivElement>, action: number, clampOutside = false) => {
     if (!interactive || !stream.width || !stream.height) {
@@ -139,7 +140,7 @@ export function DeviceViewport({ compact, device, streamEnabled, interactive, st
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!interactive) {
-      if (onOpenExpanded && (event.key === "Enter" || event.key === " ")) {
+      if (canOpenExpanded && (event.key === "Enter" || event.key === " ")) {
         event.preventDefault();
         onOpenExpanded();
       }
@@ -169,8 +170,13 @@ export function DeviceViewport({ compact, device, streamEnabled, interactive, st
     void stream.sendControl(message);
   };
 
-  const expandable = compact && onOpenExpanded !== undefined;
+  const expandable = canOpenExpanded;
   const surfaceTabIndex = interactive || expandable ? 0 : -1;
+  const surfaceLabel = interactive
+    ? `Live viewer for ${device.displayName ?? device.model}`
+    : expandable
+      ? `Open expanded view for ${device.displayName ?? device.model}`
+      : `Live viewer for ${device.displayName ?? device.model}`;
 
   return (
     <div className={`device-viewport${compact ? " is-compact" : ""}`}>
@@ -204,7 +210,7 @@ export function DeviceViewport({ compact, device, streamEnabled, interactive, st
         className={`device-viewport__surface${interactive ? " is-interactive" : ""}${expandable ? " is-expandable" : ""}`}
         tabIndex={surfaceTabIndex}
         role={interactive ? "application" : expandable ? "button" : "img"}
-        aria-label={`Live viewer for ${device.displayName ?? device.model}`}
+        aria-label={surfaceLabel}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -212,6 +218,7 @@ export function DeviceViewport({ compact, device, streamEnabled, interactive, st
         onWheel={onWheel}
         onKeyDown={onKeyDown}
         onKeyUp={onKeyUp}
+        onClick={expandable ? onOpenExpanded : undefined}
         onDoubleClick={() => onOpenExpanded?.()}
       >
         <canvas ref={stream.attachCanvas} className="device-viewport__canvas" />
