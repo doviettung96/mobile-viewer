@@ -1,0 +1,18 @@
+services:
+  runtime:
+    image: mobile-viewer-runtime
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      NODE_ENV: production
+      MVIEW_HOST: 0.0.0.0
+      MVIEW_PORT: 3000
+      MVIEW_AUTH_TOKEN: ${MVIEW_AUTH_TOKEN:-mobile-viewer-dev-token}
+      ANDROID_ADB_SERVER_HOST: ${ANDROID_ADB_SERVER_HOST:-host.docker.internal}
+      ANDROID_ADB_SERVER_PORT: ${ANDROID_ADB_SERVER_PORT:-5037}
+      MVIEW_SCRCPY_SERVER_FILE: /app/docker/assets/scrcpy-server.jar
