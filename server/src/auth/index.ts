@@ -9,7 +9,7 @@ export function isValidAuthToken(expectedToken: string, providedToken: string | 
 }
 
 export function resolveSession(request: FastifyRequest, sessionStore: SessionStore, cookieName: string) {
-  return sessionStore.get(request.cookies[cookieName]);
+  return sessionStore.get(resolveCookie(request, cookieName));
 }
 
 export function requireSession(
@@ -33,4 +33,26 @@ export function requireSession(
 export function normalizeUserName(userName: string | undefined): string {
   const trimmed = userName?.trim();
   return trimmed && trimmed.length > 0 ? trimmed : DEFAULT_USER_NAME;
+}
+
+function resolveCookie(request: FastifyRequest, cookieName: string): string | undefined {
+  const parsedCookies = request.cookies as Record<string, string> | undefined;
+  const fromPlugin = parsedCookies?.[cookieName];
+  if (fromPlugin) {
+    return fromPlugin;
+  }
+
+  const rawCookieHeader = request.headers.cookie;
+  if (!rawCookieHeader) {
+    return undefined;
+  }
+
+  for (const segment of rawCookieHeader.split(";")) {
+    const [name, ...rest] = segment.trim().split("=");
+    if (name === cookieName) {
+      return rest.join("=");
+    }
+  }
+
+  return undefined;
 }

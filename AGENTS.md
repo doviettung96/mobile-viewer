@@ -10,22 +10,26 @@ npm run typecheck
 npm run build
 npm run preview --workspace web -- --host 127.0.0.1 --port 4173
 curl -I http://127.0.0.1:4173/
+MVIEW_HOST=127.0.0.1 MVIEW_PORT=3000 npm run start --workspace @mobile-viewer/server
 ```
 
-For live browser and device smoke work, also read `docs/local-validation.md`. The repo does not yet ship a checked-in backend launcher or same-origin proxy for `/api/*` and `/ws/*`, so that part of validation remains a documented prerequisite instead of a fake default command.
+For live browser and device smoke work, also read `docs/local-validation.md`. The repo now ships a checked-in backend launcher that serves the built web app, `/api/*`, and `/ws/*` from the same origin on port `3000`.
+
+The workspace build and preview commands are the baseline validation floor only. They prove the repo still compiles and serves the browser shell, but they do not by themselves prove auth, device state, stream playback, or control interaction logic.
 
 ## Architecture Overview
 
 `mobile-viewer` is a TypeScript npm workspace. `shared/` exports API and stream contracts, `server/` contains the Fastify control plane plus ADB or scrcpy integration, and `web/` contains the Vite or React dashboard that consumes the shared contracts.
 
-The browser runtime uses relative `/api/*` and `/ws/*` paths. A live dashboard therefore requires a same-origin path between the web app and the Fastify backend, whether that is static hosting, a reverse proxy, or a future repo-local launcher flow.
+The browser runtime uses relative `/api/*` and `/ws/*` paths. The checked-in server launcher serves `web/dist` from the same Fastify process so the browser can reach the control-plane and stream routes on one origin during local validation.
 
 ## Conventions & Patterns
 
 - Keep cross-runtime types in `shared/` and import them rather than duplicating request or websocket payload shapes.
 - Use workspace-level `npm run typecheck` and `npm run build` as the default validation floor for repo changes.
+- For beads that change session state, device presence, stream display, or manual input behavior, require runtime evidence beyond the build floor. Do not accept build-only verification for those cases.
 - When documenting or validating runtime behavior, use the concrete defaults already present in code: backend port `3000`, Vite preview port `4173`, and the auth or scrcpy env vars from `server/src/config/index.ts`.
-- If a live smoke path is not implemented in the repo yet, document the missing prerequisite explicitly instead of inventing a speculative command.
+- If a live smoke path is still blocked by environment prerequisites such as missing ADB devices or a missing scrcpy server jar, document that blocker explicitly instead of inventing a speculative pass.
 
 <!-- BEGIN TEMPLATE BD WORKFLOW -->
 ## Workflow Guide

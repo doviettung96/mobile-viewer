@@ -14,14 +14,17 @@ Run these from `/home/tungace/Projects/mobile-viewer`:
 npm run typecheck
 npm run build
 npm run preview --workspace web -- --host 127.0.0.1 --port 4173
+MVIEW_HOST=127.0.0.1 MVIEW_PORT=3000 npm run start --workspace @mobile-viewer/server
 ```
 
-The repo currently has stable build and preview commands for the browser app:
+The repo currently has stable build, preview, and same-origin backend commands:
 
 - backend defaults: `MVIEW_HOST=0.0.0.0`, `MVIEW_PORT=3000`
 - web preview for smoke checks: `http://127.0.0.1:4173/`
 - auth default: `MVIEW_AUTH_TOKEN=mobile-viewer-dev-token`
 - scrcpy runtime prerequisite for live streams: `MVIEW_SCRCPY_SERVER_FILE=/absolute/path/to/scrcpy-server.jar`
+
+These commands are the baseline validation floor. They prove compile, bundle, and preview health, but not the full app behavior.
 
 ## What Works Today
 
@@ -34,26 +37,48 @@ These checks are stable and should be treated as the default automated validatio
 
 If you have a local browser available, you can also open `http://127.0.0.1:4173/` and confirm the built app loads the login shell with the heading `Open the dashboard with the shared token.`
 
+For backend-backed validation, build the repo first and then start:
+
+```bash
+MVIEW_HOST=127.0.0.1 MVIEW_PORT=3000 npm run start --workspace @mobile-viewer/server
+```
+
+That checked-in launcher serves the built web app plus `/api/*` and `/ws/*` from the same origin at `http://127.0.0.1:3000/`.
+
+That still does not prove:
+
+- login and logout behavior
+- `/api/session` and `/api/devices` correctness
+- `/ws/devices` presence updates
+- route and selected-device state
+- stream rendering and reconnect behavior
+- pointer, wheel, or keyboard control delivery
+
 ## Live Smoke Prerequisites
 
-The repo does **not** currently contain a checked-in backend launcher, static hosting path, or Vite proxy that makes the browser's relative `/api/*` and `/ws/*` requests reach the Fastify control plane.
+The repo now contains the same-origin launcher path, but full live playback and control still depend on environment prerequisites:
 
-That means a fully live dashboard smoke test still depends on an external prerequisite:
+- at least one ADB-visible device for device-presence validation
+- at least two ADB-visible devices for multi-device tile and independent-control validation
+- `MVIEW_SCRCPY_SERVER_FILE` set to a readable scrcpy server binary for `/ws/stream/:serial`
+- a local browser or temporary headless browser tool for real UI validation
 
-- a local command outside the current repo state that starts `buildControlPlaneApp(...)` on `127.0.0.1:3000`
-- a same-origin serving or proxy layer so the browser app can reach `/api/session`, `/api/devices`, `/ws/devices`, and `/ws/stream/:serial`
+For downstream implementation beads in this repo, that means:
 
-Until that exists, validation should document the gap instead of hardcoding a speculative run command.
+- build-only evidence is acceptable for docs, workflow, and pure compile-time refactors
+- backend-backed runtime evidence is required for auth, state, and device-presence behavior
+- live device evidence is required for playback and control behavior when the bead's acceptance depends on it
 
-## Optional Device Smoke
+## Device Smoke
 
-Once a launcher and same-origin path exist, the next live validation layer should use this order:
+Use this order for live validation:
 
 1. Start the backend on port `3000`
 2. Verify `curl http://127.0.0.1:3000/health`
-3. Open the browser UI through the same-origin host
-4. Log in with `MVIEW_AUTH_TOKEN`
+3. Log in through `http://127.0.0.1:3000/` with `MVIEW_AUTH_TOKEN`
+4. Confirm `/api/session`, `/api/devices`, and `/ws/devices` work against that same origin
 5. Confirm the dashboard shows either:
    - the empty state for no ADB-visible targets, or
    - one tile per connected Android device or emulator
 6. If stream playback is under test, set `MVIEW_SCRCPY_SERVER_FILE` and use either physical ADB hardware or local redroid targets for manual smoke coverage
+7. For the multi-device viewer bead, verify two tiles render and that control sent to one device does not change the other device

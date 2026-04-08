@@ -23,6 +23,7 @@
   },
   "scripts": {
     "build": "npm run build --workspace @mobile-viewer/shared && tsc -p tsconfig.json",
+    "start": "node dist/cli.js",
     "typecheck": "npm run build --workspace @mobile-viewer/shared && tsc -p tsconfig.json --noEmit"
   }
 }

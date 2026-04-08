@@ -1,4 +1,6 @@
-import fastify from "fastify";
+import { fileURLToPath } from "node:url";
+
+import fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 import cookie from "@fastify/cookie";
 import websocket from "@fastify/websocket";
 import type {
@@ -15,6 +17,7 @@ import { isValidAuthToken, normalizeUserName, requireSession, resolveSession } f
 import { SessionStore } from "../auth/session-store.js";
 import type { ServerConfig } from "../config/index.js";
 import { StreamSessionManager } from "../stream/index.js";
+import { registerStaticWebApp } from "./static.js";
 
 type WebSocketLike = {
   readyState: number;
@@ -23,10 +26,15 @@ type WebSocketLike = {
   close(code?: number, data?: string): void;
 };
 
-export function buildControlPlaneApp(config: ServerConfig) {
+export async function buildControlPlaneApp(config: ServerConfig): Promise<FastifyInstance> {
   const app = fastify({
     logger: false
   });
+  await configureControlPlaneApp(app, config);
+  return app;
+}
+
+async function configureControlPlaneApp(app: FastifyInstance, config: ServerConfig): Promise<void> {
   const sessionStore = new SessionStore(config.sessionTtlMs);
   const deviceTracker = new AdbDeviceTracker(
     config.adbPath,
@@ -36,8 +44,8 @@ export function buildControlPlaneApp(config: ServerConfig) {
   );
   const streamManager = new StreamSessionManager(config);
 
-  void app.register(cookie);
-  void app.register(websocket);
+  await app.register(cookie);
+  await app.register(websocket);
 
   app.addHook("onReady", async () => {
     await deviceTracker.start();
@@ -55,7 +63,7 @@ export function buildControlPlaneApp(config: ServerConfig) {
     adbServerPort: config.adbServerPort
   }));
 
-  app.get("/api/session", async (request): Promise<SessionInfo> => {
+  app.get("/api/session", async (request: FastifyRequest): Promise<SessionInfo> => {
     const session = resolveSession(request, sessionStore, config.sessionCookieName);
     if (!session) {
       return {
@@ -72,7 +80,7 @@ export function buildControlPlaneApp(config: ServerConfig) {
 
   app.post(
     "/api/session",
-    async (request, reply): Promise<SessionInfo> => {
+    async (request: FastifyRequest, reply: FastifyReply): Promise<SessionInfo> => {
       const body = request.body as SessionCreateRequest | undefined;
 
       if (!isValidAuthToken(config.authToken, body?.token)) {
@@ -99,7 +107,7 @@ export function buildControlPlaneApp(config: ServerConfig) {
     }
   );
 
-  app.delete("/api/session", async (request, reply): Promise<{ ok: true }> => {
+  app.delete("/api/session", async (request: FastifyRequest, reply: FastifyReply): Promise<{ ok: true }> => {
     sessionStore.delete(request.cookies[config.sessionCookieName]);
     reply.clearCookie(config.sessionCookieName, {
       path: "/"
@@ -107,7 +115,7 @@ export function buildControlPlaneApp(config: ServerConfig) {
     return { ok: true };
   });
 
-  app.get("/api/devices", async (request, reply): Promise<DeviceListResponse | void> => {
+  app.get("/api/devices", async (request: FastifyRequest, reply: FastifyReply): Promise<DeviceListResponse | void> => {
     const session = requireSession(request, reply, sessionStore, config.sessionCookieName);
     if (!session) {
       return;
@@ -117,7 +125,7 @@ export function buildControlPlaneApp(config: ServerConfig) {
     return { devices };
   });
 
-  app.get("/ws/devices", { websocket: true }, (socket, request) => {
+  app.get("/ws/devices", { websocket: true }, (socket: WebSocketLike, request: FastifyRequest) => {
     const session = resolveSession(request, sessionStore, config.sessionCookieName);
     if (!session) {
       socket.send(
@@ -154,7 +162,7 @@ export function buildControlPlaneApp(config: ServerConfig) {
     });
   });
 
-  app.get("/ws/stream/:serial", { websocket: true }, (socket, request) => {
+  app.get("/ws/stream/:serial", { websocket: true }, (socket: WebSocketLike, request: FastifyRequest) => {
     const session = resolveSession(request, sessionStore, config.sessionCookieName);
     if (!session) {
       socket.close(4401, "Unauthorized");
@@ -209,7 +217,9 @@ export function buildControlPlaneApp(config: ServerConfig) {
     });
   });
 
-  return app;
+  registerStaticWebApp(app, {
+    webDistDir: fileURLToPath(new URL("../../../web/dist", import.meta.url))
+  });
 }
 
 function decodeSocketMessage(payload: unknown): string | undefined {
