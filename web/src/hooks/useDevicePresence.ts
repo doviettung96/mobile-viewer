@@ -160,7 +160,7 @@ export function useDevicePresence(enabled: boolean) {
       }
       socket?.close();
     };
-  }, [connect, enabled]);
+  }, [enabled]);
 
   return useMemo(
     () => ({

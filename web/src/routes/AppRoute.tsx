@@ -62,7 +62,7 @@ export function AppRoute() {
       {devicePresence.devices.length === 0 ? (
         <EmptyState loading={devicePresence.loading} error={devicePresence.error} />
       ) : (
-        <section className="dashboard-layout">
+        <section className={`dashboard-layout${selectedDevice ? " has-expanded-pane" : ""}`}>
           <div className="device-grid" aria-label="Connected devices">
             {devicePresence.devices.map((device) => (
               <DeviceTile

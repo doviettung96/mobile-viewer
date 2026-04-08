@@ -16,8 +16,9 @@ type DeviceViewerCardProps =
     };
 
 export function DeviceViewerCard(props: DeviceViewerCardProps) {
-  const interactive = props.device.state === "device";
-  const stream = useDeviceStream(props.device.serial, interactive);
+  const streamEnabled = props.device.state === "device";
+  const interactive = props.layout === "expanded" && streamEnabled;
+  const stream = useDeviceStream(props.device.serial, streamEnabled);
   const deviceName = props.device.displayName ?? props.device.model;
 
   if (props.layout === "tile") {
@@ -31,7 +32,14 @@ export function DeviceViewerCard(props: DeviceViewerCardProps) {
           <span className={`device-state state-${props.device.state}`}>{props.device.state}</span>
         </div>
 
-        <DeviceViewport compact={true} device={props.device} interactive={interactive} stream={stream} />
+        <DeviceViewport
+          compact={true}
+          device={props.device}
+          streamEnabled={streamEnabled}
+          interactive={interactive}
+          stream={stream}
+          onOpenExpanded={() => props.onSelect(props.device.serial)}
+        />
 
         <dl className="device-meta">
           <div>
@@ -47,10 +55,7 @@ export function DeviceViewerCard(props: DeviceViewerCardProps) {
             <dd>{stream.viewerId ?? "pending"}</dd>
           </div>
         </dl>
-
-        <button className="secondary-button device-tile__expand" type="button" onClick={() => props.onSelect(props.device.serial)}>
-          {props.selected ? "Expanded view open" : "Open expanded view"}
-        </button>
+        <p className="device-tile__hint">{props.selected ? "Expanded view is open." : "Double-click the preview to open the expanded view."}</p>
       </article>
     );
   }
@@ -69,7 +74,13 @@ export function DeviceViewerCard(props: DeviceViewerCardProps) {
       </div>
 
       <div className="expanded-stage">
-        <DeviceViewport compact={false} device={props.device} interactive={interactive} stream={stream} />
+        <DeviceViewport
+          compact={false}
+          device={props.device}
+          streamEnabled={streamEnabled}
+          interactive={interactive}
+          stream={stream}
+        />
 
         <dl className="expanded-meta">
           <div>

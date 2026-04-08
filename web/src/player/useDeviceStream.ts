@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 
 import type { StreamClientControlMessage } from "../lib/stream/contracts.js";
 import { BrowserStreamSession, type DeviceStreamSnapshot } from "./stream-session.js";
@@ -24,6 +24,7 @@ export interface DeviceStreamBinding extends DeviceStreamSnapshot {
 
 export function useDeviceStream(serial: string, enabled: boolean) {
   const [snapshot, setSnapshot] = useState<DeviceStreamSnapshot>(INITIAL_SNAPSHOT);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const sessionRef = useRef<BrowserStreamSession | null>(null);
 
   const handleSnapshot = useEffectEvent((nextSnapshot: DeviceStreamSnapshot) => {
@@ -42,24 +43,30 @@ export function useDeviceStream(serial: string, enabled: boolean) {
     });
 
     sessionRef.current = session;
+    session.attachCanvas(canvasRef.current);
     session.start();
 
     return () => {
       sessionRef.current = null;
       void session.dispose();
     };
-  }, [enabled, handleSnapshot, serial]);
+  }, [enabled, serial]);
+
+  const attachCanvas = useCallback((node: HTMLCanvasElement | null) => {
+    canvasRef.current = node;
+    sessionRef.current?.attachCanvas(node);
+  }, []);
+
+  const sendControl = useCallback(async (message: StreamClientControlMessage) => {
+    await sessionRef.current?.sendControl(message);
+  }, []);
 
   return useMemo(
     () => ({
       ...snapshot,
-      attachCanvas(node: HTMLCanvasElement | null) {
-        sessionRef.current?.attachCanvas(node);
-      },
-      async sendControl(message: StreamClientControlMessage) {
-        await sessionRef.current?.sendControl(message);
-      }
+      attachCanvas,
+      sendControl
     }),
-    [snapshot]
+    [attachCanvas, sendControl, snapshot]
   );
 }

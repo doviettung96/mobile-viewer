@@ -222,10 +222,6 @@
   margin: 0;
 }
 
-.device-tile__expand {
-  justify-self: start;
-}
-
 .expanded-pane {
   display: grid;
   gap: 1rem;
@@ -311,8 +307,16 @@
   outline: none;
 }
 
+.device-viewport__surface.is-expandable {
+  cursor: zoom-in;
+}
+
 .device-viewport__surface.is-interactive:focus-visible {
   box-shadow: 0 0 0 3px rgba(13, 91, 215, 0.3);
+}
+
+.device-viewport__surface.is-expandable:focus-visible {
+  box-shadow: 0 0 0 3px rgba(13, 91, 215, 0.22);
 }
 
 .device-viewport__canvas {
@@ -327,6 +331,27 @@
 
 .expanded-pane .device-viewport__surface {
   min-height: 22rem;
+}
+
+.dashboard-layout.has-expanded-pane .device-grid {
+  grid-template-columns: 1fr;
+}
+
+.dashboard-layout.has-expanded-pane .device-tile {
+  gap: 0.8rem;
+  padding: 0.9rem;
+}
+
+.dashboard-layout.has-expanded-pane .device-meta {
+  gap: 0.55rem;
+}
+
+.dashboard-layout.has-expanded-pane .device-viewport.is-compact .device-viewport__surface {
+  min-height: 8.5rem;
+}
+
+.dashboard-layout.has-expanded-pane .expanded-pane .device-viewport__surface {
+  min-height: 30rem;
 }
 
 .device-viewport__overlay {
@@ -356,6 +381,12 @@
   font-size: 0.82rem;
 }
 
+.device-tile__hint {
+  margin: 0;
+  color: #688099;
+  font-size: 0.84rem;
+}
+
 .empty-state {
   padding: 1.5rem;
 }
@@ -367,6 +398,14 @@
 
   .device-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-layout.has-expanded-pane {
+    grid-template-columns: minmax(16rem, 19rem) minmax(0, 1.35fr);
+  }
+
+  .dashboard-layout.has-expanded-pane .device-grid {
+    grid-template-columns: 1fr;
   }
 }
 

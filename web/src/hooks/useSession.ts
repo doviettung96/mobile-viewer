@@ -64,7 +64,7 @@ export function useSession() {
 
   useEffect(() => {
     void refreshSession();
-  }, [refreshSession]);
+  }, []);
 
   async function login(token: string, userName: string) {
     setState((current) => ({
