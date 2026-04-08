@@ -12,14 +12,15 @@ export function CapabilityNotice({ isSecureContext, supportsWebCodecs }: Capabil
     <section className="capability-notice" aria-live="polite">
       {!isSecureContext ? (
         <p>
-          This client is not in a secure context. Live device playback will require HTTPS or localhost before
-          the player bead can decode streams.
+          This client is not in a secure context. Live device playback requires HTTPS or localhost because most
+          browsers only expose WebCodecs on secure origins.
         </p>
       ) : null}
       {!supportsWebCodecs ? (
         <p>
-          This browser does not expose WebCodecs. Dashboard presence will work, but live playback support will
-          be unavailable until a compatible browser is used.
+          This browser does not expose WebCodecs or `VideoDecoder` for this page. Dashboard presence will work,
+          but live playback will remain unavailable until you use localhost, HTTPS, or a browser that exposes
+          WebCodecs on this origin.
         </p>
       ) : null}
     </section>

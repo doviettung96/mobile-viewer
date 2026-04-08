@@ -76,6 +76,8 @@ The container-backed validation run for epic `mview-n2c` proved the following on
 
 This now proves the same-origin Docker runtime all the way through browser frame rendering for the local validation environment used on April 8, 2026.
 
+That proof is specifically for `http://127.0.0.1:3000/`. Accessing the same service over a plain-LAN origin such as `http://192.168.1.8:3000/` is still expected to lose `VideoDecoder` in many browsers because that origin is not a secure context. In that case the dashboard and auth flow may still work, but live playback will require HTTPS or another secure-origin setup before WebCodecs can decode video frames.
+
 That still does not prove:
 
 - login and logout behavior
