@@ -140,6 +140,11 @@ export class DeviceStreamSession {
 
   async #run(): Promise<void> {
     try {
+      console.log("[stream] session start", {
+        serial: this.serial,
+        tunnelForward: this.config.tunnelForward
+      });
+
       if (!this.config.scrcpyServerFile) {
         throw createSessionError(
           "missing_scrcpy_server_file",
@@ -149,7 +154,16 @@ export class DeviceStreamSession {
       }
 
       const adb = await this.adbServerClient.createAdb({ serial: this.serial });
+      console.log("[stream] adb transport acquired", {
+        serial: this.serial
+      });
+
       await pushScrcpyServer(adb, this.config.scrcpyServerFile, this.config.scrcpyServerPath);
+      console.log("[stream] scrcpy server pushed", {
+        serial: this.serial,
+        serverPath: this.config.scrcpyServerPath,
+        serverFile: this.config.scrcpyServerFile
+      });
 
       const options = new AdbScrcpyOptionsLatest({
         video: true,
@@ -158,10 +172,15 @@ export class DeviceStreamSession {
         sendCodecMeta: true,
         sendDeviceMeta: true,
         sendFrameMeta: true,
-        tunnelForward: false
+        tunnelForward: this.config.tunnelForward
       });
 
       const client = await AdbScrcpyClient.start(adb, this.config.scrcpyServerPath, options);
+      console.log("[stream] scrcpy client started", {
+        serial: this.serial,
+        tunnelForward: this.config.tunnelForward
+      });
+
       this.#client = client;
       void drainTextStream(client.output);
 
@@ -169,6 +188,12 @@ export class DeviceStreamSession {
       if (!video) {
         throw createSessionError("missing_video_stream", "scrcpy did not expose a video stream.", true);
       }
+
+      console.log("[stream] video stream acquired", {
+        serial: this.serial,
+        codec: ScrcpyVideoCodecNameMap.get(video.metadata.codec) ?? String(video.metadata.codec),
+        deviceName: video.metadata.deviceName
+      });
 
       this.#publishMetadata(video.metadata);
       this.#sizeChangedCleanup = video.sizeChanged(({ width, height }) => {
@@ -184,6 +209,11 @@ export class DeviceStreamSession {
         this.#broadcastPacket(packet);
       });
     } catch (error) {
+      console.error("[stream] session failed", {
+        serial: this.serial,
+        error
+      });
+
       const streamError = normalizeSessionError(this.serial, error);
       this.#broadcastEvent(streamError);
       if (streamError.retryable && this.#viewers.size > 0 && !this.#closed) {
@@ -346,9 +376,13 @@ async function drainTextStream(stream: ReadableStream<string>): Promise<void> {
   const reader = stream.getReader();
   try {
     while (true) {
-      const { done } = await reader.read();
+      const { done, value } = await reader.read();
       if (done) {
         return;
+      }
+
+      if (value !== "") {
+        console.log("[stream] scrcpy output", value);
       }
     }
   } finally {

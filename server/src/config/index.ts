@@ -10,6 +10,7 @@ export interface ServerConfig {
   adbServerHost: string;
   adbServerPort: number;
   devicePollMs: number;
+  tunnelForward: boolean;
   scrcpyServerFile: string | undefined;
   scrcpyServerPath: string;
   streamIdleTimeoutMs: number;
@@ -26,6 +27,25 @@ function parseNumber(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function parseBoolean(value: string | undefined, fallback: boolean): boolean {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  switch (value.toLowerCase()) {
+    case "true":
+    case "1":
+    case "yes":
+      return true;
+    case "false":
+    case "0":
+    case "no":
+      return false;
+    default:
+      return fallback;
+  }
+}
+
 export function loadServerConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   return {
     host: env.MVIEW_HOST ?? "0.0.0.0",
@@ -37,6 +57,7 @@ export function loadServerConfig(env: NodeJS.ProcessEnv = process.env): ServerCo
     adbServerHost: env.ANDROID_ADB_SERVER_HOST ?? "127.0.0.1",
     adbServerPort: parseNumber(env.ANDROID_ADB_SERVER_PORT, 5037),
     devicePollMs: parseNumber(env.MVIEW_DEVICE_POLL_MS, 2000),
+    tunnelForward: parseBoolean(env.MVIEW_SCRCPY_TUNNEL_FORWARD, false),
     scrcpyServerFile: env.MVIEW_SCRCPY_SERVER_FILE,
     scrcpyServerPath: env.MVIEW_SCRCPY_SERVER_PATH ?? DefaultServerPath,
     streamIdleTimeoutMs: parseNumber(env.MVIEW_STREAM_IDLE_TIMEOUT_MS, 15_000),

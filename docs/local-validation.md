@@ -57,6 +57,22 @@ For container-backed validation, use the checked-in Compose path when your local
 That path is the runtime contract for the container image and exposes the same-origin app on port `3000` with host ADB routing via `host.docker.internal`. If `docker compose` is unavailable locally, treat that as an environment blocker for container smoke rather than a repo failure.
 On Linux, if the container cannot reach the host ADB daemon through `host.docker.internal:5037`, restart the host daemon with `adb -a start-server` before retrying `/api/devices`.
 
+### Docker Playback Status On April 8, 2026
+
+The container-backed validation run for epic `mview-n2c` proved the following on `http://127.0.0.1:3000/`:
+
+- `npm run typecheck` passed
+- `npm run build` passed
+- `./scripts/posix/start-runtime-container.sh -d` built and started `mobile-viewer-runtime-1`
+- `curl -sf http://127.0.0.1:3000/health` returned `{"ok":true,"adbServerHost":"host.docker.internal","adbServerPort":5037,...}`
+- `POST /api/session` with `MVIEW_AUTH_TOKEN=mobile-viewer-dev-token` returned an authenticated session and set the cookie
+- authenticated `GET /api/devices` returned two redroid devices: `localhost:6012` and `localhost:6013`
+- an authenticated websocket connection to `/ws/stream/localhost:6012` created a stream session and reached the new `[stream]` logging path inside the container
+- the websocket stream delivered binary video packets after the baked Docker `scrcpy-server.jar` was realigned with the runtime client stack
+- container logs showed normal scrcpy startup, including `scrcpy client started`, `video stream acquired`, and server-side encoder output
+
+This terminal session still did not directly prove browser frame rendering or the visible error overlay because no local browser or headless browser harness was used. It did prove that the previous Docker playback blocker was the baked scrcpy artifact mismatch and that the same-origin runtime now reaches binary frame delivery again.
+
 That still does not prove:
 
 - login and logout behavior

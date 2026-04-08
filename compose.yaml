@@ -13,6 +13,7 @@ services:
       MVIEW_HOST: 0.0.0.0
       MVIEW_PORT: 3000
       MVIEW_AUTH_TOKEN: ${MVIEW_AUTH_TOKEN:-mobile-viewer-dev-token}
+      MVIEW_SCRCPY_TUNNEL_FORWARD: "true"
       ANDROID_ADB_SERVER_HOST: ${ANDROID_ADB_SERVER_HOST:-host.docker.internal}
       ANDROID_ADB_SERVER_PORT: ${ANDROID_ADB_SERVER_PORT:-5037}
       MVIEW_SCRCPY_SERVER_FILE: /app/docker/assets/scrcpy-server.jar
