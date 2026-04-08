@@ -17,6 +17,18 @@ const INITIAL_SNAPSHOT: DeviceStreamSnapshot = {
   resetReason: null
 };
 
+function getPlaybackCapabilityError(): string | null {
+  if (typeof VideoDecoder !== "undefined") {
+    return null;
+  }
+
+  if (!window.isSecureContext) {
+    return "Live playback is unavailable on this page because WebCodecs requires HTTPS or localhost.";
+  }
+
+  return "Live playback is unavailable because this browser does not expose WebCodecs or VideoDecoder on this page.";
+}
+
 export interface DeviceStreamBinding extends DeviceStreamSnapshot {
   attachCanvas(node: HTMLCanvasElement | null): void;
   sendControl(message: StreamClientControlMessage): Promise<void>;
@@ -34,6 +46,16 @@ export function useDeviceStream(serial: string, enabled: boolean) {
   useEffect(() => {
     if (!enabled) {
       setSnapshot(INITIAL_SNAPSHOT);
+      return;
+    }
+
+    const capabilityError = getPlaybackCapabilityError();
+    if (capabilityError) {
+      setSnapshot({
+        ...INITIAL_SNAPSHOT,
+        status: "error",
+        error: capabilityError
+      });
       return;
     }
 

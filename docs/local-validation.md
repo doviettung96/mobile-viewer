@@ -57,13 +57,34 @@ For container-backed validation, use the checked-in Compose path when your local
 That path is the runtime contract for the container image and exposes the same-origin app on port `3000` with host ADB routing via `host.docker.internal`. If `docker compose` is unavailable locally, treat that as an environment blocker for container smoke rather than a repo failure.
 On Linux, if the container cannot reach the host ADB daemon through `host.docker.internal:5037`, restart the host daemon with `adb -a start-server` before retrying `/api/devices`.
 
+### Docker Playback Status On April 8, 2026
+
+The container-backed validation run for epic `mview-n2c` proved the following on `http://127.0.0.1:3000/`:
+
+- `npm run typecheck` passed
+- `npm run build` passed
+- `./scripts/posix/start-runtime-container.sh -d` built and started `mobile-viewer-runtime-1`
+- `curl -sf http://127.0.0.1:3000/health` returned `{"ok":true,"adbServerHost":"host.docker.internal","adbServerPort":5037,...}`
+- `POST /api/session` with `MVIEW_AUTH_TOKEN=mobile-viewer-dev-token` returned an authenticated session and set the cookie
+- authenticated `GET /api/devices` returned two redroid devices: `localhost:6012` and `localhost:6013`
+- an authenticated websocket connection to `/ws/stream/localhost:6012` created a stream session and reached the new `[stream]` logging path inside the container
+- the websocket stream delivered binary video packets after the baked Docker `scrcpy-server.jar` was realigned with the runtime client stack
+- container logs showed normal scrcpy startup, including `scrcpy client started`, `video stream acquired`, and server-side encoder output
+- headless Chrome smoke via `node /tmp/mview-cdp-check.mjs normal http://127.0.0.1:3000/` logged in successfully, rendered two device tiles, opened `localhost:6012`, reached `status: "Live"`, and observed non-zero pixels on the expanded viewer canvas
+- the browser playback fix was to stop forcing `hardwareAcceleration: "prefer-hardware"` in `web/src/player/h264-config.ts`; replaying the captured frame in the same session proved that `no-preference` and `prefer-software` decode successfully while `prefer-hardware` fails asynchronously in this environment
+- the previous browser failure state also showed the stream error overlay clearly with the message `Unsupported configuration. Check isConfigSupported() prior to calling configure().`
+
+This now proves the same-origin Docker runtime all the way through browser frame rendering for the local validation environment used on April 8, 2026.
+
+That proof is specifically for `http://127.0.0.1:3000/`. Accessing the same service over a plain-LAN origin such as `http://192.168.1.8:3000/` is still expected to lose `VideoDecoder` in many browsers because that origin is not a secure context. In that case the dashboard and auth flow may still work, but live playback will require HTTPS or another secure-origin setup before WebCodecs can decode video frames.
+
 That still does not prove:
 
 - login and logout behavior
 - `/api/session` and `/api/devices` correctness
 - `/ws/devices` presence updates
 - route and selected-device state
-- stream rendering and reconnect behavior
+- reconnect behavior
 - pointer, wheel, or keyboard control delivery
 - container runtime wiring beyond the baked defaults listed above
 

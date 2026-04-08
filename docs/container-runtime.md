@@ -18,6 +18,10 @@ adb -a start-server
 
 Starting ADB without `-a` may leave it bound to `127.0.0.1:5037`, which makes `host.docker.internal:5037` fail from inside the runtime container even though the host can see the devices locally.
 
+## Forward Tunnel Mode
+
+Docker uses forward tunneling in this runtime because the scrcpy listener has to be reachable from the host ADB server. Reverse tunneling keeps the listener inside the container network namespace, which prevents playback from crossing the Docker boundary.
+
 The checked-in runtime starter on Linux is:
 
 ```bash

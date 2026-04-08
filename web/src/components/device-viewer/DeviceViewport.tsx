@@ -216,15 +216,13 @@ export function DeviceViewport({ compact, device, streamEnabled, interactive, st
       >
         <canvas ref={stream.attachCanvas} className="device-viewport__canvas" />
 
-        {!stream.hasFrame ? (
-          <div className="device-viewport__overlay">
-            <p>{streamEnabled ? "Waiting for the device stream." : "Live viewing is only available for connected devices."}</p>
-          </div>
-        ) : null}
-
         {stream.error ? (
           <div className="device-viewport__overlay device-viewport__overlay--error">
             <p>{stream.error}</p>
+          </div>
+        ) : !stream.hasFrame ? (
+          <div className="device-viewport__overlay">
+            <p>{streamEnabled ? "Waiting for the device stream." : "Live viewing is only available for connected devices."}</p>
           </div>
         ) : null}
       </div>
