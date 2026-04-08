@@ -20,7 +20,7 @@ export function createH264DecoderConfig(data: Uint8Array): H264DecoderConfigResu
     displayAspectWidth: parsed.croppedWidth,
     displayAspectHeight: parsed.croppedHeight,
     optimizeForLatency: true,
-    hardwareAcceleration: "prefer-hardware"
+    hardwareAcceleration: "no-preference"
   };
 
   return {

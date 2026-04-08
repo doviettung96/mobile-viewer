@@ -70,8 +70,11 @@ The container-backed validation run for epic `mview-n2c` proved the following on
 - an authenticated websocket connection to `/ws/stream/localhost:6012` created a stream session and reached the new `[stream]` logging path inside the container
 - the websocket stream delivered binary video packets after the baked Docker `scrcpy-server.jar` was realigned with the runtime client stack
 - container logs showed normal scrcpy startup, including `scrcpy client started`, `video stream acquired`, and server-side encoder output
+- headless Chrome smoke via `node /tmp/mview-cdp-check.mjs normal http://127.0.0.1:3000/` logged in successfully, rendered two device tiles, opened `localhost:6012`, reached `status: "Live"`, and observed non-zero pixels on the expanded viewer canvas
+- the browser playback fix was to stop forcing `hardwareAcceleration: "prefer-hardware"` in `web/src/player/h264-config.ts`; replaying the captured frame in the same session proved that `no-preference` and `prefer-software` decode successfully while `prefer-hardware` fails asynchronously in this environment
+- the previous browser failure state also showed the stream error overlay clearly with the message `Unsupported configuration. Check isConfigSupported() prior to calling configure().`
 
-This terminal session still did not directly prove browser frame rendering or the visible error overlay because no local browser or headless browser harness was used. It did prove that the previous Docker playback blocker was the baked scrcpy artifact mismatch and that the same-origin runtime now reaches binary frame delivery again.
+This now proves the same-origin Docker runtime all the way through browser frame rendering for the local validation environment used on April 8, 2026.
 
 That still does not prove:
 
@@ -79,7 +82,7 @@ That still does not prove:
 - `/api/session` and `/api/devices` correctness
 - `/ws/devices` presence updates
 - route and selected-device state
-- stream rendering and reconnect behavior
+- reconnect behavior
 - pointer, wheel, or keyboard control delivery
 - container runtime wiring beyond the baked defaults listed above
 
