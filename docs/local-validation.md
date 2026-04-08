@@ -15,16 +15,19 @@ npm run typecheck
 npm run build
 npm run preview --workspace web -- --host 127.0.0.1 --port 4173
 MVIEW_HOST=127.0.0.1 MVIEW_PORT=3000 npm run start --workspace @mobile-viewer/server
+./scripts/posix/start-runtime-container.sh
 ```
 
-The repo currently has stable build, preview, and same-origin backend commands:
+The repo currently has stable build, preview, same-origin backend, and Compose runtime commands:
 
 - backend defaults: `MVIEW_HOST=0.0.0.0`, `MVIEW_PORT=3000`
 - web preview for smoke checks: `http://127.0.0.1:4173/`
 - auth default: `MVIEW_AUTH_TOKEN=mobile-viewer-dev-token`
 - scrcpy runtime prerequisite for live streams: `MVIEW_SCRCPY_SERVER_FILE=/absolute/path/to/scrcpy-server.jar`
+- Compose runtime source of truth: `compose.yaml` and `./scripts/posix/start-runtime-container.sh`
+- container runtime defaults: `MVIEW_PORT=3000`, `MVIEW_AUTH_TOKEN=mobile-viewer-dev-token`, `ANDROID_ADB_SERVER_HOST=host.docker.internal`, and `MVIEW_SCRCPY_SERVER_FILE=/app/docker/assets/scrcpy-server.jar`
 
-These commands are the baseline validation floor. They prove compile, bundle, and preview health, but not the full app behavior.
+These commands are the baseline validation floor. They prove compile, bundle, and preview health, but not the full app behavior or the container runtime wiring.
 
 ## What Works Today
 
@@ -45,6 +48,15 @@ MVIEW_HOST=127.0.0.1 MVIEW_PORT=3000 npm run start --workspace @mobile-viewer/se
 
 That checked-in launcher serves the built web app plus `/api/*` and `/ws/*` from the same origin at `http://127.0.0.1:3000/`.
 
+For container-backed validation, use the checked-in Compose path when your local environment has a working Compose CLI:
+
+```bash
+./scripts/posix/start-runtime-container.sh
+```
+
+That path is the runtime contract for the container image and exposes the same-origin app on port `3000` with host ADB routing via `host.docker.internal`. If `docker compose` is unavailable locally, treat that as an environment blocker for container smoke rather than a repo failure.
+On Linux, if the container cannot reach the host ADB daemon through `host.docker.internal:5037`, restart the host daemon with `adb -a start-server` before retrying `/api/devices`.
+
 That still does not prove:
 
 - login and logout behavior
@@ -53,6 +65,7 @@ That still does not prove:
 - route and selected-device state
 - stream rendering and reconnect behavior
 - pointer, wheel, or keyboard control delivery
+- container runtime wiring beyond the baked defaults listed above
 
 ## Live Smoke Prerequisites
 
@@ -82,3 +95,5 @@ Use this order for live validation:
    - one tile per connected Android device or emulator
 6. If stream playback is under test, set `MVIEW_SCRCPY_SERVER_FILE` and use either physical ADB hardware or local redroid targets for manual smoke coverage
 7. For the multi-device viewer bead, verify two tiles render and that control sent to one device does not change the other device
+8. For container-runtime validation, run `./scripts/posix/start-runtime-container.sh`, confirm the app is reachable on `http://127.0.0.1:3000/`, and note the local Compose CLI version only as environment context, not as a repo guarantee
+9. If the container uses `host.docker.internal` for ADB, make sure the host daemon is listening beyond loopback, for example with `adb -a start-server`, before treating `/api/devices` failures as an app bug

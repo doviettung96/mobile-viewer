@@ -11,11 +11,12 @@ npm run build
 npm run preview --workspace web -- --host 127.0.0.1 --port 4173
 curl -I http://127.0.0.1:4173/
 MVIEW_HOST=127.0.0.1 MVIEW_PORT=3000 npm run start --workspace @mobile-viewer/server
+./scripts/posix/start-runtime-container.sh
 ```
 
-For live browser and device smoke work, also read `docs/local-validation.md`. The repo now ships a checked-in backend launcher that serves the built web app, `/api/*`, and `/ws/*` from the same origin on port `3000`.
+For live browser and device smoke work, also read `docs/local-validation.md`. The repo now ships a checked-in backend launcher that serves the built web app, `/api/*`, and `/ws/*` from the same origin on port `3000`, and a checked-in Compose launch path that runs the same runtime contract inside a container.
 
-The workspace build and preview commands are the baseline validation floor only. They prove the repo still compiles and serves the browser shell, but they do not by themselves prove auth, device state, stream playback, or control interaction logic.
+The workspace build and preview commands are the baseline validation floor only. They prove the repo still compiles and serves the browser shell, but they do not by themselves prove auth, device state, stream playback, container runtime wiring, or control interaction logic.
 
 ## Architecture Overview
 
@@ -27,8 +28,8 @@ The browser runtime uses relative `/api/*` and `/ws/*` paths. The checked-in ser
 
 - Keep cross-runtime types in `shared/` and import them rather than duplicating request or websocket payload shapes.
 - Use workspace-level `npm run typecheck` and `npm run build` as the default validation floor for repo changes.
-- For beads that change session state, device presence, stream display, or manual input behavior, require runtime evidence beyond the build floor. Do not accept build-only verification for those cases.
-- When documenting or validating runtime behavior, use the concrete defaults already present in code: backend port `3000`, Vite preview port `4173`, and the auth or scrcpy env vars from `server/src/config/index.ts`.
+- For beads that change session state, device presence, stream display, manual input behavior, or container runtime wiring, require runtime evidence beyond the build floor. Do not accept build-only verification for those cases.
+- When documenting or validating runtime behavior, use the concrete defaults already present in code: backend port `3000`, Vite preview port `4173`, `MVIEW_AUTH_TOKEN`, `MVIEW_SCRCPY_SERVER_FILE`, and the host ADB routing default of `host.docker.internal` from `server/src/config/index.ts` and `compose.yaml`.
 - If a live smoke path is still blocked by environment prerequisites such as missing ADB devices or a missing scrcpy server jar, document that blocker explicitly instead of inventing a speculative pass.
 
 <!-- BEGIN TEMPLATE BD WORKFLOW -->

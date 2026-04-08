@@ -25,6 +25,7 @@ The stable automated validation floor for this repo is:
 Use those defaults unless the current execution plan tightens them further.
 
 That floor proves the repo still compiles, bundles, and serves a browser shell. It does **not** by itself prove that the app's real behavior works.
+That floor also does **not** by itself prove that the container runtime path is wired correctly.
 
 For `mobile-viewer`, the end goal is correct:
 
@@ -38,10 +39,13 @@ Any bead that changes one of those behaviors must require runtime evidence above
 
 - Run the **exact commands** from the current plan's `## Verification` section.
 - Prefer the repo's concrete defaults: backend `3000`, preview `4173`, auth token `MVIEW_AUTH_TOKEN`, and scrcpy server jar via `MVIEW_SCRCPY_SERVER_FILE`.
+- For container-runtime validation, prefer the checked-in Compose launcher `./scripts/posix/start-runtime-container.sh` when the plan is about the runtime image or its launch contract. That path uses `compose.yaml`, exposes the app on port `3000`, routes ADB through `host.docker.internal`, and bakes `MVIEW_SCRCPY_SERVER_FILE=/app/docker/assets/scrcpy-server.jar` into the container image.
+- On Linux, if that container path depends on host ADB access, confirm the host daemon is reachable from the bridge network. A common prerequisite is starting the host daemon with `adb -a start-server` so `host.docker.internal:5037` is not loopback-only.
 - Do not invent a backend launch or proxy command that the repo does not actually contain.
 - The repo's checked-in backend launcher is `MVIEW_HOST=127.0.0.1 MVIEW_PORT=3000 npm run start --workspace @mobile-viewer/server` after `npm run build`.
 - Treat `typecheck`, `build`, and preview smoke as the minimum floor, not as sufficient proof for auth, device state, stream playback, input, or cross-runtime state logic.
 - When a bead changes display logic, interaction logic, or state transitions, the verification contract must require runtime evidence for that behavior or the bead must stop as blocked.
+- If the local environment lacks `docker compose`, report that as a container-runtime blocker rather than downgrading the check to build-only proof.
 
 ## Steps
 
@@ -85,6 +89,7 @@ Use the change list plus the verification plan to decide what to run.
 | stream player, decode, viewport, coordinate-map, or control-input paths changed | Require live runtime evidence for playback or control behavior. Build and preview alone are not enough. |
 | backend runtime or auth paths changed and the plan includes a launcher command | Run the backend command, then hit `/health` and any plan-defined session or websocket smoke checks. |
 | stream, ADB, or scrcpy paths changed | Run the plan's live smoke steps when the required environment exists. If the bead's acceptance depends on that behavior and the environment is absent, treat it as blocked rather than silently downgrading to build-only checks. |
+| container runtime wiring or launch-contract docs changed | Run the compose launcher when available, confirm the runtime comes up on port `3000`, and treat missing Compose CLI support as a local blocker if the plan depends on that path. |
 
 ### 4. Validate the verification contract before running anything
 
