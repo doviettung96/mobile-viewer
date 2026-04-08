@@ -42,6 +42,8 @@ export class DeviceStreamSession {
   #reconnectTimer: NodeJS.Timeout | undefined;
   #sizeChangedCleanup: (() => void) | undefined;
   #lastMetadata: StreamVideoMetadataEvent | undefined;
+  #lastConfiguration: Uint8Array | undefined;
+  #lastKeyframe: Uint8Array | undefined;
   #closed = false;
 
   constructor(
@@ -71,6 +73,14 @@ export class DeviceStreamSession {
 
     if (this.#lastMetadata) {
       viewer.sendEvent(this.#lastMetadata);
+    }
+
+    if (this.#lastConfiguration) {
+      viewer.sendPacket(this.#lastConfiguration);
+    }
+
+    if (this.#lastKeyframe) {
+      viewer.sendPacket(this.#lastKeyframe);
     }
 
     void this.#ensureStarted();
@@ -103,6 +113,8 @@ export class DeviceStreamSession {
     const client = this.#client;
     this.#client = undefined;
     this.#lastMetadata = undefined;
+    this.#lastConfiguration = undefined;
+    this.#lastKeyframe = undefined;
 
     if (client) {
       await client.close();
@@ -224,6 +236,14 @@ export class DeviceStreamSession {
 
   #broadcastPacket(packet: ScrcpyMediaStreamPacket): void {
     const encoded = encodeMediaPacket(packet);
+
+    if (packet.type === "configuration") {
+      this.#lastConfiguration = encoded;
+      this.#lastKeyframe = undefined;
+    } else if (packet.keyframe) {
+      this.#lastKeyframe = encoded;
+    }
+
     for (const viewer of this.#viewers.values()) {
       viewer.sendPacket(encoded);
     }

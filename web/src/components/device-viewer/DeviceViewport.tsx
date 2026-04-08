@@ -17,12 +17,14 @@ import type { DeviceStreamBinding } from "../../player/useDeviceStream.js";
 interface DeviceViewportProps {
   compact: boolean;
   device: DeviceSummary;
+  streamEnabled: boolean;
   interactive: boolean;
   stream: DeviceStreamBinding;
+  onOpenExpanded?(): void;
 }
 
-function statusLabel(stream: DeviceStreamBinding, interactive: boolean): string {
-  if (!interactive) {
+function statusLabel(stream: DeviceStreamBinding, streamEnabled: boolean): string {
+  if (!streamEnabled) {
     return "Unavailable";
   }
 
@@ -40,7 +42,7 @@ function statusLabel(stream: DeviceStreamBinding, interactive: boolean): string 
   }
 }
 
-export function DeviceViewport({ compact, device, interactive, stream }: DeviceViewportProps) {
+export function DeviceViewport({ compact, device, streamEnabled, interactive, stream, onOpenExpanded }: DeviceViewportProps) {
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const activePointerIdRef = useRef<number | null>(null);
 
@@ -136,6 +138,14 @@ export function DeviceViewport({ compact, device, interactive, stream }: DeviceV
   };
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!interactive) {
+      if (onOpenExpanded && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        onOpenExpanded();
+      }
+      return;
+    }
+
     const message = keyboardEventToControl(event.nativeEvent, AndroidKeyEventAction.Down);
     if (!message) {
       return;
@@ -146,6 +156,10 @@ export function DeviceViewport({ compact, device, interactive, stream }: DeviceV
   };
 
   const onKeyUp = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!interactive) {
+      return;
+    }
+
     const message = keyboardEventToControl(event.nativeEvent, AndroidKeyEventAction.Up);
     if (!message) {
       return;
@@ -155,10 +169,13 @@ export function DeviceViewport({ compact, device, interactive, stream }: DeviceV
     void stream.sendControl(message);
   };
 
+  const expandable = compact && onOpenExpanded !== undefined;
+  const surfaceTabIndex = interactive || expandable ? 0 : -1;
+
   return (
     <div className={`device-viewport${compact ? " is-compact" : ""}`}>
       <div className="device-viewport__toolbar">
-        <span className={`viewer-status viewer-status--${stream.status}`}>{statusLabel(stream, interactive)}</span>
+        <span className={`viewer-status viewer-status--${stream.status}`}>{statusLabel(stream, streamEnabled)}</span>
         <div className="viewer-toolbar__actions">
           <button className="secondary-button" type="button" disabled={!interactive} onClick={() => void sendBack(stream.sendControl)}>
             Back
@@ -184,9 +201,9 @@ export function DeviceViewport({ compact, device, interactive, stream }: DeviceV
 
       <div
         ref={surfaceRef}
-        className={`device-viewport__surface${interactive ? " is-interactive" : ""}`}
-        tabIndex={interactive ? 0 : -1}
-        role="application"
+        className={`device-viewport__surface${interactive ? " is-interactive" : ""}${expandable ? " is-expandable" : ""}`}
+        tabIndex={surfaceTabIndex}
+        role={interactive ? "application" : expandable ? "button" : "img"}
         aria-label={`Live viewer for ${device.displayName ?? device.model}`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -195,12 +212,13 @@ export function DeviceViewport({ compact, device, interactive, stream }: DeviceV
         onWheel={onWheel}
         onKeyDown={onKeyDown}
         onKeyUp={onKeyUp}
+        onDoubleClick={() => onOpenExpanded?.()}
       >
         <canvas ref={stream.attachCanvas} className="device-viewport__canvas" />
 
         {!stream.hasFrame ? (
           <div className="device-viewport__overlay">
-            <p>{interactive ? "Waiting for the device stream." : "Live viewing is only available for connected devices."}</p>
+            <p>{streamEnabled ? "Waiting for the device stream." : "Live viewing is only available for connected devices."}</p>
           </div>
         ) : null}
 

@@ -1,7 +1,7 @@
 import { createStreamSocket, parseStreamServerEvent } from "../lib/stream/client.js";
 import type { StreamClientControlMessage, StreamServerEvent, StreamVideoPacket } from "../lib/stream/contracts.js";
 import { parseStreamVideoPacket } from "../lib/stream/packet.js";
-import { createH264DecoderConfig } from "./h264-config.js";
+import { createH264DecoderConfig, encodeAnnexBAvcSample } from "./h264-config.js";
 
 export interface DeviceStreamSnapshot {
   status: "idle" | "connecting" | "waiting" | "streaming" | "error";
@@ -189,11 +189,13 @@ export class BrowserStreamSession {
 
     try {
       const timestamp = packet.pts !== undefined ? Number(packet.pts) : this.#nextTimestamp++;
+      const data = encodeAnnexBAvcSample(packet.data);
+
       this.#decoder.decode(
         new EncodedVideoChunk({
           type: packet.keyframe ? "key" : "delta",
           timestamp,
-          data: packet.data
+          data
         })
       );
     } catch (error) {
