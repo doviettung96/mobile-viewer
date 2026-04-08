@@ -113,14 +113,11 @@ async function installDashboardMocks(page: Page) {
   });
 }
 
-async function openExpandedView(page: Page) {
-  const previewSurface = page.getByRole("button", { name: `Open expanded view for ${DEVICE.displayName}` });
-  await expect(previewSurface).toBeVisible();
-  await previewSurface.click();
-
+async function openExpandedViewFromRoute(page: Page) {
+  await page.goto(`/#/device/${DEVICE.serial}`);
   await expect(page.getByText("Expanded device shell")).toBeVisible();
   await expect(page.getByRole("button", { name: "Back to grid" })).toBeVisible();
-  await expect(page).toHaveURL(/#\/device\/ABC123456$/);
+  await expect(page).toHaveURL(new RegExp(`#\\/device\\/${DEVICE.serial}$`));
 }
 
 async function assertNoHorizontalOverflow(page: Page) {
@@ -129,7 +126,7 @@ async function assertNoHorizontalOverflow(page: Page) {
 }
 
 for (const viewport of VIEWPORTS) {
-  test(`${viewport.label} layout opens the expanded viewer from a single tap`, async ({ page }) => {
+  test(`${viewport.label} layout keeps the dashboard and expanded viewer overflow-safe`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await installDashboardMocks(page);
 
@@ -141,7 +138,7 @@ for (const viewport of VIEWPORTS) {
     await expect(dashboardLayout).toBeVisible();
     await assertNoHorizontalOverflow(page);
 
-    await openExpandedView(page);
+    await openExpandedViewFromRoute(page);
     await assertNoHorizontalOverflow(page);
 
     const columnCount = await dashboardLayout.evaluate((node) => getComputedStyle(node).gridTemplateColumns.trim().split(/\s+/).length);
@@ -156,3 +153,17 @@ for (const viewport of VIEWPORTS) {
     await expect(page.getByRole("heading", { name: "Device dashboard" })).toBeVisible();
   });
 }
+
+test("small laptop keeps double-click navigation on the compact preview", async ({ page }) => {
+  await page.setViewportSize({ width: 1365, height: 768 });
+  await installDashboardMocks(page);
+
+  await page.goto("/");
+  const previewSurface = page.getByRole("button", { name: `Live viewer for ${DEVICE.displayName}` });
+  await expect(previewSurface).toBeVisible();
+
+  await previewSurface.dblclick();
+
+  await expect(page.getByText("Expanded device shell")).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`#\\/device\\/${DEVICE.serial}$`));
+});

@@ -41,16 +41,6 @@ export function DeviceViewerCard(props: DeviceViewerCardProps) {
           onOpenExpanded={() => props.onSelect(props.device.serial)}
         />
 
-        <div className="device-tile__actions">
-          {props.selected ? (
-            <span className="device-tile__open-state">Expanded view is open.</span>
-          ) : (
-            <button className="secondary-button" type="button" onClick={() => props.onSelect(props.device.serial)}>
-              Open expanded view
-            </button>
-          )}
-        </div>
-
         <dl className="device-meta">
           <div>
             <dt>Model</dt>
@@ -65,7 +55,7 @@ export function DeviceViewerCard(props: DeviceViewerCardProps) {
             <dd>{stream.viewerId ?? "pending"}</dd>
           </div>
         </dl>
-        <p className="device-tile__hint">{props.selected ? "Expanded view is open." : "Tap the preview or use Open expanded view."}</p>
+        <p className="device-tile__hint">{props.selected ? "Expanded view is open." : "Double-click the preview to open the expanded view."}</p>
       </article>
     );
   }

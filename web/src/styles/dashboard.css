@@ -318,7 +318,6 @@
 
 .device-viewport__surface.is-expandable {
   cursor: zoom-in;
-  touch-action: manipulation;
 }
 
 .device-viewport__surface.is-interactive:focus-visible {
@@ -392,27 +391,9 @@
   min-width: 0;
 }
 
-.device-viewport__meta span,
-.device-tile__open-state {
+.device-viewport__meta span {
   min-width: 0;
   overflow-wrap: anywhere;
-}
-
-.device-tile__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.device-tile__actions .secondary-button {
-  justify-self: start;
-}
-
-.device-tile__open-state {
-  color: #4b647f;
-  font-size: 0.84rem;
-  font-weight: 600;
 }
 
 .device-tile__hint {
@@ -469,13 +450,11 @@
     text-align: left;
   }
 
-  .viewer-toolbar__actions,
-  .device-tile__actions {
+  .viewer-toolbar__actions {
     width: 100%;
   }
 
-  .viewer-toolbar__actions .secondary-button,
-  .device-tile__actions .secondary-button {
+  .viewer-toolbar__actions .secondary-button {
     flex: 1 1 10rem;
   }
 
