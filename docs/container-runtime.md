@@ -2,6 +2,8 @@
 
 This guide covers the checked-in compose runtime started from `compose.yaml` on port `3000`. The container serves the UI and API from one origin, while the containerized server reaches the host ADB server through `host.docker.internal` and the `host-gateway` mapping defined in the compose file.
 
+For remote playback from another machine over a public secure origin, use the dedicated HTTPS deployment in [`docs/public-https-runtime.md`](./public-https-runtime.md). That path keeps the app behind a Caddy reverse proxy and avoids the insecure-origin `VideoDecoder` limitation that applies to plain `http://<host>:3000/`.
+
 ## Prerequisites
 
 - Docker with the Compose plugin available on the host

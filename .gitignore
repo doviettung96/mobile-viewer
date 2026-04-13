@@ -9,3 +9,5 @@
 node_modules/
 dist/
 *.tsbuildinfo
+.runtime/
+deploy/public/.env

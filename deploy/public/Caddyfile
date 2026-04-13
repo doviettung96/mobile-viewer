@@ -1,0 +1,3 @@
+{$MVIEW_PUBLIC_HOSTNAME} {
+  reverse_proxy runtime:3000
+}

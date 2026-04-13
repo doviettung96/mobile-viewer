@@ -1,0 +1,40 @@
+services:
+  runtime:
+    image: mobile-viewer-runtime
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - "3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      NODE_ENV: production
+      MVIEW_HOST: 0.0.0.0
+      MVIEW_PORT: 3000
+      MVIEW_AUTH_TOKEN: ${MVIEW_AUTH_TOKEN:?set MVIEW_AUTH_TOKEN in deploy/public/.env}
+      MVIEW_SCRCPY_TUNNEL_FORWARD: "true"
+      ANDROID_ADB_SERVER_HOST: ${ANDROID_ADB_SERVER_HOST:-host.docker.internal}
+      ANDROID_ADB_SERVER_PORT: ${ANDROID_ADB_SERVER_PORT:-5037}
+      MVIEW_SCRCPY_SERVER_FILE: /app/docker/assets/scrcpy-server.jar
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - runtime
+    environment:
+      MVIEW_PUBLIC_HOSTNAME: ${MVIEW_PUBLIC_HOSTNAME:?set MVIEW_PUBLIC_HOSTNAME in deploy/public/.env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
